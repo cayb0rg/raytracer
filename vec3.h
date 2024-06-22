@@ -57,6 +57,14 @@ class vec3 {
         double length() const { // the const keyword means that the function does not modify the object
             return std::sqrt(length_squared());
         }
+
+        static vec3 random() {
+            return vec3(random_double(), random_double(), random_double());
+        }
+
+        static vec3 random(double min, double max) {
+            return vec3(random_double(min, max), random_double(min, max), random_double(min, max));
+        }
 };
 
 // Vector utility functions
@@ -134,6 +142,31 @@ inline vec3 cross_product(const vec3 &u, const vec3 &v) {
 // Returns a vector that points in the same direction as v with length 1
 inline vec3 unit_vector(const vec3& v) {
     return v / v.length();
+}
+
+// Returns a vector inside the unit sphere
+inline vec3 random_in_unit_sphere() {
+    while (true) {
+        auto p = vec3::random(-1, 1);
+        if (p.length_squared() >= 1) continue;
+        return p;
+    }
+}
+
+// Returns a vector on the surface of the unit sphere
+inline vec3 random_unit_vector() {
+    return unit_vector(random_in_unit_sphere());
+}
+
+inline vec3 random_on_hemisphere(const vec3& normal) {
+    vec3 on_unit_sphere = random_unit_vector();
+    if (dot(on_unit_sphere, normal) > 0.0) {
+        // in the same hemisphere as the normal
+        return on_unit_sphere;
+    } else {
+        // in the opposite hemisphere as the normal
+        return -on_unit_sphere;
+    }
 }
 
 #endif
