@@ -10,9 +10,10 @@
 
 class camera {
     public:
-        double aspect_ratio = 1.0;
-        int image_width = 100;
-        int samples_per_pixel = 10;
+        double aspect_ratio;
+        int image_width;
+        int samples_per_pixel;
+        int max_depth;
 
         camera() {}
 
@@ -116,17 +117,22 @@ class camera {
             return vec3(random_double() - 0.5, random_double() - 0.5, 0);
         }
 
-        color ray_color(const ray& r, const hittable& world) {
+        color ray_color(const ray& r, const hittable& world, int depth = 0) {
+            if (depth >= max_depth) {
+                return color(0, 0, 0);
+            }
+
             hit_record rec;
-            if (world.hit(r, interval(0, infinity), rec)) {
+            if (world.hit(r, interval(0.01, infinity), rec)) { // 0.001 to avoid self-intersection
                 // Color the normal
                 // return 0.5 * (rec.normal + color(1, 1, 1));
 
                 // Use diffuse lighting
                 // Light that reflects off a diffuse surface has its direction randomized
-                vec3 direction = random_on_hemisphere(rec.normal);
+                // vec3 direction = random_on_hemisphere(rec.normal);
+                vec3 direction = rec.normal + random_unit_vector();
                 // Each ray loses 50% of its color when it bounces
-                return 0.5 * ray_color(ray(rec.p, direction), world);
+                return 0.5 * ray_color(ray(rec.p, direction), world, depth + 1);
             }
 
             /* Simple Gradient */
