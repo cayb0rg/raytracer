@@ -123,13 +123,15 @@ class camera {
             }
 
             hit_record rec;
-            if (world.hit(r, interval(0.01, infinity), rec)) { // 0.001 to avoid self-intersection
+            if (world.hit(r, interval(0.001, infinity), rec)) { // 0.001 to avoid self-intersection
                 // Color the normal
                 // return 0.5 * (rec.normal + color(1, 1, 1));
 
                 // Use diffuse lighting
                 // Light that reflects off a diffuse surface has its direction randomized
                 // vec3 direction = random_on_hemisphere(rec.normal);
+
+                // Use Lambertian reflection
                 vec3 direction = rec.normal + random_unit_vector();
                 // Each ray loses 50% of its color when it bounces
                 return 0.5 * ray_color(ray(rec.p, direction), world, depth + 1);

@@ -11,7 +11,7 @@
 
 #include "vec3.h"
 
-class ray {
+class ray : public vec3 {
     public:
 
         ray() {}
