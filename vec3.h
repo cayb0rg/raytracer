@@ -65,6 +65,12 @@ class vec3 {
         static vec3 random(double min, double max) {
             return vec3(random_double(min, max), random_double(min, max), random_double(min, max));
         }
+
+        // Returns true if the vector is close to zero in all dimensions
+        bool near_zero() const {
+            const auto s = 1e-8;
+            return (fabs(e[0]) < s) && (fabs(e[1]) < s) && (fabs(e[2]) < s);
+        }
 };
 
 // Vector utility functions
@@ -167,6 +173,11 @@ inline vec3 random_on_hemisphere(const vec3& normal) {
         // in the opposite hemisphere as the normal
         return -on_unit_sphere;
     }
+}
+
+inline vec3 reflect(const vec3& v, const vec3& n) {
+    double length = dot(v, n);
+    return v - 2*length*n;
 }
 
 #endif

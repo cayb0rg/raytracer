@@ -9,6 +9,8 @@ class hit_record {
         vec3 normal;
         double t;
         bool front_face;
+        shared_ptr<material> mat;
+
 };
 
 class hittable {

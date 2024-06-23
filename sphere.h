@@ -3,11 +3,12 @@
 
 #include "hittable.h"
 #include "vec3.h"
+#include "diffuse.h"
 
 class sphere : public hittable {
     public:
         sphere() {}
-        sphere(vec3 center, double radius) : center(center), radius(fmax(0, radius)) {}
+        sphere(vec3 center, double radius, shared_ptr<material> mat) : center(center), radius(fmax(0, radius)), mat(mat) {}
 
         bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
             vec3 oc = center - r.origin();
@@ -57,6 +58,7 @@ class sphere : public hittable {
                 rec.normal = unit_vector(r.at(rec.t) - center);
                 rec.p = r.at(rec.t);
                 rec.front_face = front_face;
+                rec.mat = mat;
 
                 return true;
             }
@@ -65,6 +67,7 @@ class sphere : public hittable {
     private:
         vec3 center;
         double radius;
+        shared_ptr<material> mat;
 };
 
 #endif
