@@ -19,6 +19,9 @@ class camera {
         vec3 lookat   = vec3(0,0,-1);       // Point camera is looking at
         vec3 vup      = vec3(0,1,0);        // Camera-relative "up" direction
 
+        double defocus_angle = 0.0;  // Variation angle of rays through each pixel
+        double focus_dist = 10.0;    // Distance from camera lookfrom point to plane of perfect focus
+
         camera() {}
 
         void render(const hittable& world) {
@@ -58,6 +61,8 @@ class camera {
         int image_height; // Rendered image height
         double pixel_samples_scale; // Color scale factor for a sum of pixel samples
         vec3   u, v, w;              // Camera frame basis vectors
+        vec3 defocus_disk_u; // Defocus disk horizontal radius
+        vec3 defocus_disk_v; // Defocus disk vertical radius
 
 
         void initialize() {
@@ -70,11 +75,11 @@ class camera {
             // The camera is the eye through which both we and the raytracer see the world
             // The vector from the camera to the viewport is orthogonal to the viewport
             // The distance between the camera and the viewport is the focal length
-            auto focal_length = (lookfrom - lookat).length();
             center = lookfrom;
+            // auto focal_length = (lookfrom - lookat).length();
             auto theta = degrees_to_radians(vertical_fov);
             auto h = tan(theta / 2);
-            auto viewport_height = 2 * h * focal_length;
+            auto viewport_height = 2 * h * focus_dist;
             auto viewport_width = viewport_height * (double(image_width)/image_height);
             // don't use aspect ratio because that is the _ideal_ aspect ratio
 
@@ -103,28 +108,42 @@ class camera {
             std::clog << "Pixel u\n" << pixel_delta_u << "\n Pixel v " << pixel_delta_v << "\n";
 
             auto viewport_upper_left = center
-                - focal_length * w // cross the focal length to get to the viewport
+                - focus_dist * w // cross the focal length to get to the viewport
                 - viewport_u/2 - viewport_v/2; // we're at the center of the viewport already, so move to the upper left
             pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v); // center of the first pixel
 
             pixel_samples_scale = 1.0 / samples_per_pixel;
 
+
+            // Calculate the camera defocus disk basis vectors.
+            auto defocus_radius = focus_dist * tan(degrees_to_radians(defocus_angle / 2));
+            defocus_disk_u = u * defocus_radius;
+            defocus_disk_v = v * defocus_radius;
+
         }
 
         ray get_ray(int i, int j) {
-            // The ray starts at the camera center and goes through the pixel
+            // Construct a camera ray originating from the defocus disk and directed at a randomly
+            // sampled point around the pixel location i, j.
             auto offset = sample_square();
             auto pixel_sample = pixel00_loc +
                                 ((i + offset.x()) * pixel_delta_u) +
                                 ((j + offset.y()) * pixel_delta_v);
-            auto ray_direction = pixel_sample - center;
-            ray r(center, ray_direction);
+            auto ray_origin = (defocus_angle <= 0) ? center : defocus_disk_sample();
+            auto ray_direction = pixel_sample - ray_origin;
+            ray r(ray_origin, ray_direction);
 
             return r;
         }
 
         vec3 sample_square() const {
             return vec3(random_double() - 0.5, random_double() - 0.5, 0);
+        }
+
+        vec3 defocus_disk_sample() const {
+            // Returns a random point in the camera defocus disk.
+            auto p = random_in_unit_disk();
+            return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
         }
 
         color ray_color(const ray& r, const hittable& world, int depth = 0) {
