@@ -55,7 +55,7 @@ class sphere : public hittable {
                 }
 
                 rec.t = root;
-                rec.normal = unit_vector(r.at(rec.t) - center);
+                rec.normal = normal;
                 rec.p = r.at(rec.t);
                 rec.front_face = front_face;
                 rec.mat = mat;

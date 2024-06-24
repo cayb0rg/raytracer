@@ -14,6 +14,10 @@ class camera {
         int image_width;
         int samples_per_pixel;
         int max_depth;
+        double vertical_fov = 90;
+        vec3 lookfrom = vec3(0,0,0);        // Point camera is looking from
+        vec3 lookat   = vec3(0,0,-1);       // Point camera is looking at
+        vec3 vup      = vec3(0,1,0);        // Camera-relative "up" direction
 
         camera() {}
 
@@ -53,6 +57,7 @@ class camera {
         vec3 pixel_delta_v; // Offset between pixels vertically
         int image_height; // Rendered image height
         double pixel_samples_scale; // Color scale factor for a sum of pixel samples
+        vec3   u, v, w;              // Camera frame basis vectors
 
 
         void initialize() {
@@ -61,16 +66,17 @@ class camera {
             // Make sure image_height is greater than or equal to 1
             image_height = image_height < 1 ? 1 : image_height;
 
-            /* Viewport */
-            auto viewport_height = 2.0;
-            auto viewport_width = (double(image_width) / image_height) * viewport_height;
-            // don't use aspect ratio because that is the _ideal_ aspect ratio
-
-            /* Camera Setup */
+            /* Camera and Viewport Setup */
             // The camera is the eye through which both we and the raytracer see the world
             // The vector from the camera to the viewport is orthogonal to the viewport
             // The distance between the camera and the viewport is the focal length
-            auto focal_length = 1.0;
+            auto focal_length = (lookfrom - lookat).length();
+            center = lookfrom;
+            auto theta = degrees_to_radians(vertical_fov);
+            auto h = tan(theta / 2);
+            auto viewport_height = 2 * h * focal_length;
+            auto viewport_width = viewport_height * (double(image_width)/image_height);
+            // don't use aspect ratio because that is the _ideal_ aspect ratio
 
             // y-axis is up, x-axis is right, z-axis is forward (right-handed coordinates)
             //|    y+
@@ -79,12 +85,16 @@ class camera {
             //|    |/
             //|z-  *----> z+
             //^--viewport
+            w = unit_vector(lookfrom - lookat); // camera forward
+            u = unit_vector(cross_product(vup, w)); // camera right
+            v = cross_product(w, u); // camera up
+
 
             // If we want the zeroeth pixel in the top-left and work to bottom-right,
             // Then y should increase from top to bottom
             // viewport_u is the horizontal vector, viewport_v is the vertical vector
-            auto viewport_u = vec3(viewport_width, 0, 0);
-            auto viewport_v = vec3(0, -viewport_height, 0); // negative because y increases downwards
+            auto viewport_u = u * viewport_width;
+            auto viewport_v = -v * viewport_height; // negative because y increases downwards
 
             // Horizonal and vertical delta vectors from pixel to pixel
             pixel_delta_u = viewport_u / image_width;
@@ -93,7 +103,7 @@ class camera {
             std::clog << "Pixel u\n" << pixel_delta_u << "\n Pixel v " << pixel_delta_v << "\n";
 
             auto viewport_upper_left = center
-                - vec3(0, 0, focal_length) // cross the focal length to get to the viewport
+                - focal_length * w // cross the focal length to get to the viewport
                 - viewport_u/2 - viewport_v/2; // we're at the center of the viewport already, so move to the upper left
             pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v); // center of the first pixel
 
