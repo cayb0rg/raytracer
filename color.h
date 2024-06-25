@@ -7,6 +7,8 @@
 
 #include "vec3.h"
 #include "interval.h"
+#include <iostream>
+#include <string>
 
 // C++ NOTE:
 // difference between "using color = vec3;" vs "class color : public vec3 {};"
@@ -35,7 +37,7 @@ inline double linear_to_gamma(double linear_component)
 
 using color = vec3;
 
-void write_color(std::ostream &out, color pixel_color) {
+std::string write_color(color pixel_color) {
     auto r = pixel_color.x();
     auto g = pixel_color.y();
     auto b = pixel_color.z();
@@ -52,7 +54,8 @@ void write_color(std::ostream &out, color pixel_color) {
     int bbyte = int(intensity.clamp(b) * 256);
 
     // Write out the pixel color components
-    out << rbyte << ' ' << gbyte << ' ' << bbyte << '\n';
+    std::string out = std::to_string(rbyte) + " " + std::to_string(gbyte) + " " + std::to_string(bbyte) + "\n";
+    return out;
 }
 
 #endif
